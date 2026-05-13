@@ -3,12 +3,12 @@ import { useState, useRef, useEffect } from "react";
 // ── PERSISTENT STORAGE HELPERS ────────────────────────
 async function storageLoad(key, fallback) {
   try {
-    const r = await window.storage.get(key);
+    const r = localStorage.getItem(key);
     return r ? JSON.parse(r.value) : fallback;
   } catch { return fallback; }
 }
 async function storageSave(key, value) {
-  try { await window.storage.set(key, JSON.stringify(value)); } catch {}
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
 // ── PALETTE ──────────────────────────────────────────
