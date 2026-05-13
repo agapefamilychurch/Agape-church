@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 async function storageLoad(key, fallback) {
   try {
     const r = localStorage.getItem(key);
-    return r ? JSON.parse(r.value) : fallback;
+    return r ? JSON.parse(r) : fallback;
   } catch { return fallback; }
 }
 async function storageSave(key, value) {
