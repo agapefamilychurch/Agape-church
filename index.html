@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#07111F"/>
+<title>아가페 패밀리 크리스챤 교회</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:#07111F;color:#FAF6EE;overflow-x:hidden;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+// STORAGE
+function storageLoad(key, fallback) {
+  try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; }
+  catch { return fallback; }
+}
+function storageSave(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// COLORS
+const C = {
+  navy:"#07111F", navyMid:"#0D1E35", navyLt:"#132844",
+  gold:"#C9A84C", goldLt:"#E5C96A", goldDk:"#8C6E28",
+  cream:"#FAF6EE", white:"#FFFFFF", amber:"#D4845A",
+  green:"#2A6E49", muted:"#7A8899", kakao:"#FEE500",
+  border:"rgba(201,168,76,0.18)",
+};
+
+// DATA
+const STAFF = [
+  {role:"Senior Pastor",roleKo:"담임목사",name:"Rev. Kim Sung Nyun"},
+  {role:"Educational Pastor",roleKo:"교육목사",name:"Rev. Kang Sang Soo"},
+  {role:"Head Pastor",roleKo:"수석목사",name:"Ptr. Gerome Mananzala"},
+  {role:"Head, Christian Education",roleKo:"기독교교육부",name:"Ptr. Mark Joseph Frago"},
+  {role:"Head, Senior Department",roleKo:"시니어부",name:"Ptr. Dexter Dioneda"},
+  {role:"Head, Single Adult Dept.",roleKo:"싱글어덜트부",name:"Ptr. Mclarry De Guzman"},
+  {role:"Head, Youth Department",roleKo:"청년부",name:"Ptr. Alexander Bien Jr."},
+  {role:"Head, Music Team",roleKo:"음악팀",name:"Ptr. Raymon Espuerta"},
+];
+
+const MISSIONS = [
+  {id:1,flag:"🇵🇭",country:"Philippines",area:"San Mateo, Rizal",
+   name:"Jakin & Boaz Education Mission",nameKo:"야긴보아즈 교육선교",
+   desc:"Timothy Academy empowers children with faith, knowledge, and life skills.",
+   descKo:"티모시 아카데미를 통해 아이들에게 믿음과 교육을 가르칩니다.",
+   raised:385000,goal:500000,donors:127,tag:"Education",tagKo:"교육선교"},
+  {id:2,flag:"🇵🇭",country:"Philippines",area:"San Mateo, Rizal",
+   name:"Medical & Gospel Mission",nameKo:"의료 및 복음 선교",
+   desc:"Free medical missions bring healing and the Good News.",
+   descKo:"무료 의료 서비스와 복음을 전합니다.",
+   raised:210000,goal:400000,donors:84,tag:"Medical",tagKo:"의료선교"},
+  {id:3,flag:"🇵🇭",country:"Philippines",area:"San Mateo, Rizal",
+   name:"Scholarship Mission",nameKo:"장학금 선교",
+   desc:"Supporting students with scholarships for a better future.",
+   descKo:"장학금으로 학생들의 미래를 지원합니다.",
+   raised:98000,goal:300000,donors:56,tag:"Scholarship",tagKo:"장학금"},
+];
+
+const EVENTS = [
+  {month:"MAY",day:"18",tag:"Sunday Service",tagKo:"주일예배",title:"Mission Sunday Special Worship",titleKo:"선교주일 특별예배",time:"9:30 AM",loc:"Main Sanctuary"},
+  {month:"MAY",day:"23",tag:"Prayer",tagKo:"기도회",title:"Friday Night Prayer",titleKo:"금요 기도회",time:"7:00 PM",loc:"Prayer Room"},
+  {month:"MAY",day:"24",tag:"Youth",tagKo:"청년부",title:"Youth Fellowship & Praise",titleKo:"청년 예배 및 찬양",time:"7:00 PM",loc:"Fellowship Hall"},
+  {month:"JUN",day:"06",tag:"Academy",tagKo:"아카데미",title:"Children's Day Celebration",titleKo:"어린이날 행사",time:"8:00 AM",loc:"Education Center"},
+  {month:"JUN",day:"13",tag:"Seminar",tagKo:"세미나",title:"Mission Business Seminar",titleKo:"선교 비즈니스 세미나",time:"2:00 PM",loc:"Room 301"},
+];
+
+const NOTICES_INIT = [
+  {id:1,date:"May 11, 2026",titleEn:"Mission Sunday — Special Offering",titleKo:"선교주일 특별 헌금",
+   bodyEn:"This Sunday we receive a special offering for our Philippines mission.",
+   bodyKo:"이번 주일 필리핀 선교를 위한 특별 헌금을 드립니다."},
+  {id:2,date:"May 8, 2026",titleEn:"Timothy Academy — New Enrollment Open",titleKo:"티모시 아카데미 신입생 모집",
+   bodyEn:"Timothy Academy is now accepting new students for the June session.",
+   bodyKo:"6월 학기 티모시 아카데미 신입생을 모집합니다."},
+];
+
+const CSS = `
+.shell{max-width:430px;margin:0 auto;min-height:100vh;background:#07111F;display:flex;flex-direction:column;}
+.hdr{background:#0D1E35;padding:14px 16px 0;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(201,168,76,0.18);}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.brand-en{font-family:'Cormorant Garamond',serif;font-size:12px;font-weight:700;color:#C9A84C;line-height:1.2;}
+.brand-sub{font-size:9px;color:rgba(201,168,76,.6);margin-top:1px;}
+.lang-toggle{display:flex;background:rgba(255,255,255,.06);border-radius:20px;overflow:hidden;border:1px solid rgba(201,168,76,0.18);}
+.lang-btn{padding:5px 11px;border:none;background:none;font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:#7A8899;}
+.lang-btn.on{background:#C9A84C;color:#07111F;font-weight:700;}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;padding:8px 12px;background:none;border:none;border-bottom:2px solid transparent;color:#7A8899;font-size:10px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.tab.on{color:#C9A84C;border-bottom-color:#C9A84C;}
+.tab-ic{font-size:16px;}
+.body{flex:1;overflow-y:auto;padding-bottom:24px;}
+.hero{background:linear-gradient(160deg,#132844 0%,#152e52 55%,#0b2040 100%);padding:24px 18px 22px;}
+.hero-eye{font-size:10px;color:#C9A84C;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.hero-ttl{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:#fff;line-height:1.25;margin-bottom:5px;white-space:pre-line;}
+.hero-verse{font-size:11px;color:rgba(250,246,238,.6);font-style:italic;line-height:1.6;margin-bottom:18px;border-left:2px solid rgba(201,168,76,.35);padding-left:10px;}
+.hero-btns{display:flex;gap:10px;}
+.btn-g{background:linear-gradient(135deg,#C9A84C,#8C6E28);color:#07111F;border:none;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.btn-o{background:transparent;color:#C9A84C;border:1.5px solid #C9A84C;padding:11px 18px;border-radius:24px;font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 16px 0;}
+.stat{background:#0D1E35;border:1px solid rgba(201,168,76,0.18);border-radius:14px;padding:13px 8px;text-align:center;}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#C9A84C;}
+.stat-l{font-size:10px;color:#7A8899;margin-top:2px;}
+.sec{padding:18px 16px 0;}
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.sec-ttl{font-family:'Cormorant Garamond',serif;font-size:18px;color:#FAF6EE;}
+.see-all{font-size:11px;color:#C9A84C;cursor:pointer;}
+.mcard{background:#0D1E35;border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:15px;margin-bottom:12px;position:relative;overflow:hidden;}
+.mcard::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(#C9A84C,#D4845A);}
+.mloc{font-size:10px;color:#C9A84C;letter-spacing:1.5px;text-transform:uppercase;}
+.mname{font-family:'Cormorant Garamond',serif;font-size:15px;color:#fff;}
+.mdesc{font-size:11px;color:#7A8899;line-height:1.5;margin:6px 0 10px;}
+.pbar-lbl{display:flex;justify-content:space-between;font-size:11px;color:#7A8899;margin-bottom:4px;}
+.pbar-amt{color:#C9A84C;font-weight:700;}
+.pbar{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+.pbar-fill{height:100%;background:linear-gradient(90deg,#C9A84C,#D4845A);border-radius:3px;}
+.mcard-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.mdonors{font-size:11px;color:#7A8899;}
+.btn-sm{background:rgba(201,168,76,.12);color:#C9A84C;border:1px solid rgba(201,168,76,.4);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.ecard{background:#0D1E35;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:13px;display:flex;gap:12px;margin-bottom:10px;}
+.ebox{min-width:42px;background:linear-gradient(135deg,#C9A84C,#8C6E28);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 4px;}
+.emon{font-size:8px;font-weight:700;color:#07111F;letter-spacing:1px;}
+.eday{font-size:21px;font-weight:700;color:#07111F;line-height:1;}
+.etag{font-size:9px;color:#D4845A;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.ettl{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;}
+.emeta{font-size:11px;color:#7A8899;}
+.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px;}
+.alb{background:#0D1E35;border-radius:14px;overflow:hidden;border:1px solid rgba(201,168,76,0.18);cursor:pointer;}
+.alb-img{width:100%;aspect-ratio:4/3;object-fit:cover;}
+.alb-info{padding:9px 10px 11px;}
+.alb-ttl{font-size:12px;font-weight:600;color:#FAF6EE;margin-bottom:2px;}
+.alb-meta{font-size:10px;color:#7A8899;}
+.upload-area{margin:0 16px 16px;border:2px dashed rgba(201,168,76,.3);border-radius:14px;padding:20px;text-align:center;cursor:pointer;background:rgba(201,168,76,.04);}
+.upload-lbl{font-size:13px;color:#C9A84C;font-weight:600;margin-bottom:4px;}
+.upload-hint{font-size:11px;color:#7A8899;}
+.notice-list{padding:0 16px 16px;}
+.notice-card{background:#0D1E35;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:15px;margin-bottom:10px;}
+.notice-date{font-size:10px;color:#7A8899;margin-bottom:4px;}
+.notice-ttl{font-size:14px;font-weight:600;color:#FAF6EE;margin-bottom:5px;}
+.notice-body{font-size:12px;color:rgba(250,246,238,.65);line-height:1.65;}
+.notice-add-btn{display:block;width:calc(100% - 32px);margin:0 16px 14px;padding:13px;background:rgba(201,168,76,.1);border:1.5px dashed rgba(201,168,76,.4);border-radius:14px;color:#C9A84C;font-size:13px;font-weight:600;cursor:pointer;text-align:center;font-family:'Noto Sans KR',sans-serif;}
+.nf-input{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.09);border-radius:10px;padding:11px 13px;color:#FAF6EE;font-size:13px;font-family:'Noto Sans KR',sans-serif;margin-bottom:10px;outline:none;}
+.nf-textarea{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.09);border-radius:10px;padding:11px 13px;color:#FAF6EE;font-size:13px;font-family:'Noto Sans KR',sans-serif;margin-bottom:12px;outline:none;resize:none;min-height:80px;}
+.nf-btns{display:flex;gap:8px;}
+.nf-submit{flex:1;padding:11px;background:linear-gradient(135deg,#C9A84C,#8C6E28);border:none;border-radius:10px;color:#07111F;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.nf-cancel{padding:11px 16px;background:rgba(255,255,255,.06);border:none;border-radius:10px;color:#7A8899;font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.notice-form{background:#0D1E35;border:1px solid rgba(201,168,76,0.18);border-radius:14px;padding:16px;margin:0 16px 14px;}
+.acard{background:#0D1E35;border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:16px;margin-bottom:14px;}
+.acard-ttl{font-family:'Cormorant Garamond',serif;font-size:16px;color:#C9A84C;margin-bottom:10px;}
+.staff-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.contact-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.cicon{width:34px;height:34px;background:rgba(201,168,76,.1);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:flex-end;justify-content:center;z-index:200;}
+.modal{background:#0D1E35;border-radius:22px 22px 0 0;padding:20px 18px 40px;width:100%;max-width:430px;border-top:1px solid rgba(201,168,76,0.18);}
+.modal-handle{width:36px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;margin:0 auto 16px;}
+.modal-ttl{font-family:'Cormorant Garamond',serif;font-size:20px;color:#FAF6EE;margin-bottom:3px;}
+.modal-sub{font-size:12px;color:#7A8899;margin-bottom:16px;}
+.amt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.amt-btn{padding:11px 6px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.09);border-radius:12px;color:#FAF6EE;font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.amt-btn.on{background:rgba(201,168,76,.15);border-color:#C9A84C;color:#C9A84C;}
+.cinput{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.09);border-radius:12px;padding:12px 14px;color:#FAF6EE;font-size:14px;font-family:'Noto Sans KR',sans-serif;margin-bottom:12px;outline:none;}
+.btn-donate{width:100%;padding:14px;background:linear-gradient(135deg,#C9A84C,#8C6E28);border:none;border-radius:14px;color:#07111F;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+.kakao-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:#FEE500;border:none;border-radius:14px;color:#3A1D1D;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:10px;}
+.toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:#2A6E49;color:#fff;padding:11px 22px;border-radius:22px;font-size:13px;font-weight:600;z-index:400;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
+.bank-box{background:rgba(201,168,76,.07);border:1.5px solid rgba(201,168,76,.3);border-radius:12px;padding:16px 14px;margin-bottom:12px;}
+.vw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:300;display:flex;flex-direction:column;}
+.vw-hdr{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+.vw-ttl{font-family:'Cormorant Garamond',serif;font-size:17px;color:#FAF6EE;}
+.vw-close{background:rgba(255,255,255,.1);border:none;color:#FAF6EE;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;}
+.vw-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;}
+.vw-img{width:100%;max-height:52vh;object-fit:contain;border-radius:12px;}
+.vw-cap{font-size:12px;color:#7A8899;margin-top:10px;text-align:center;}
+.vw-nav{display:flex;align-items:center;gap:18px;padding:10px 16px;justify-content:center;}
+.vw-btn{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,0.18);color:#C9A84C;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;}
+.vw-btn:disabled{opacity:.3;}
+.vw-dots{display:flex;gap:6px;}
+.vw-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;}
+.vw-dot.on{background:#C9A84C;width:18px;border-radius:3px;}
+`;
+
+const ALBUMS_INIT = [
+  {id:1,title:"Sunday Worship",titleKo:"주일 예배",date:"May 11, 2026",
+   cover:"https://images.unsplash.com/photo-1438032005730-c779502df39b?w=400&q=80",
+   photos:[
+     {url:"https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",cap:"Sunday Morning Worship"},
+     {url:"https://images.unsplash.com/photo-1507692049790-de58290a4334?w=600&q=80",cap:"Praise & Worship Team"},
+     {url:"https://images.unsplash.com/photo-1548625361-58a9b86aa83b?w=600&q=80",cap:"Congregation in Prayer"},
+   ]},
+  {id:2,title:"Timothy Academy",titleKo:"티모시 아카데미",date:"May 8, 2026",
+   cover:"https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=400&q=80",
+   photos:[
+     {url:"https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=600&q=80",cap:"Bible Class"},
+     {url:"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80",cap:"Children Learning"},
+   ]},
+  {id:3,title:"Youth Fellowship",titleKo:"청년 모임",date:"Apr 26, 2026",
+   cover:"https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80",
+   photos:[
+     {url:"https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",cap:"Youth Night"},
+     {url:"https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=600&q=80",cap:"Praise Night"},
+   ]},
+  {id:4,title:"Mission Outreach",titleKo:"선교 아웃리치",date:"Apr 19, 2026",
+   cover:"https://images.unsplash.com/photo-1596478558591-d25f4b29c745?w=400&q=80",
+   photos:[
+     {url:"https://images.unsplash.com/photo-1596478558591-d25f4b29c745?w=600&q=80",cap:"Community Outreach"},
+     {url:"https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&q=80",cap:"Feeding Program"},
+   ]},
+];
+
+function AlbumViewer({album, lang, onClose}) {
+  const [idx, setIdx] = React.useState(0);
+  const ph = album.photos[idx];
+  return (
+    <div className="vw-overlay">
+      <div className="vw-hdr">
+        <div className="vw-ttl">{lang==="ko"?(album.titleKo||album.title):album.title}</div>
+        <button className="vw-close" onClick={onClose}>✕</button>
+      </div>
+      <div className="vw-main">
+        <img className="vw-img" src={ph.url} alt={ph.cap}/>
+        <div className="vw-cap">{ph.cap}</div>
+      </div>
+      <div className="vw-nav">
+        <button className="vw-btn" onClick={()=>setIdx(i=>i-1)} disabled={idx===0}>‹</button>
+        <div className="vw-dots">
+          {album.photos.map((_,i)=>(
+            <div key={i} className={"vw-dot"+(i===idx?" on":"")} onClick={()=>setIdx(i)}/>
+          ))}
+        </div>
+        <button className="vw-btn" onClick={()=>setIdx(i=>i+1)} disabled={idx===album.photos.length-1}>›</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [lang, setLang] = useState("ko");
+  const [tab, setTab] = useState("home");
+  const [albums, setAlbums] = useState(ALBUMS_INIT);
+  const [notices, setNotices] = useState(NOTICES_INIT);
+  const [selAlbum, setSelAlbum] = useState(null);
+  const [showDonate, setShowDonate] = useState(false);
+  const [selMission, setSelMission] = useState(null);
+  const [selAmt, setSelAmt] = useState(10000);
+  const [custAmt, setCustAmt] = useState("");
+  const [toast, setToast] = useState(null);
+  const [showNoticeForm, setShowNoticeForm] = useState(false);
+  const [nfTitle, setNfTitle] = useState("");
+  const [nfBody, setNfBody] = useState("");
+  const fileRef = useRef();
+
+  useEffect(() => {
+    try {
+      const sn = localStorage.getItem("afcc-notices");
+      const sl = localStorage.getItem("afcc-lang");
+      if (sn) setNotices(JSON.parse(sn));
+      if (sl) setLang(JSON.parse(sl));
+    } catch(e) {}
+  }, []);
+
+  useEffect(() => { try { localStorage.setItem("afcc-notices", JSON.stringify(notices)); } catch(e) {} }, [notices]);
+  useEffect(() => { try { localStorage.setItem("afcc-lang", JSON.stringify(lang)); } catch(e) {} }, [lang]);
+
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null), 2800); };
+
+  const openDonate = (m) => { setSelMission(m); setShowDonate(true); };
+
+  const submitDonate = () => {
+    setShowDonate(false);
+    showToast(lang==="ko"?"🙏 감사합니다! 하나님께서 풍성히 갚아 주실 것입니다!":"🙏 Thank you! God bless you abundantly!");
+  };
+
+  const handleUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    const today = new Date().toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
+    Promise.all(files.map(f => new Promise(res => {
+      const reader = new FileReader();
+      reader.onload = ev => res({url:ev.target.result, cap:f.name.replace(/\.[^.]+$/,"")});
+      reader.readAsDataURL(f);
+    }))).then(newPhotos => {
+      const newAlbum = {id:Date.now(),title:"My Upload",titleKo:"업로드 사진",date:today,cover:newPhotos[0].url,photos:newPhotos};
+      setAlbums(prev => [newAlbum, ...prev]);
+      showToast(lang==="ko"?"사진이 업로드되었습니다! ✅":"Photos uploaded! ✅");
+    });
+    e.target.value = "";
+  };
+
+  const submitNotice = () => {
+    if (!nfTitle.trim()) return;
+    const today = new Date().toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
+    setNotices(prev=>[{id:Date.now(),date:today,titleEn:nfTitle,titleKo:nfTitle,bodyEn:nfBody,bodyKo:nfBody},...prev]);
+    setNfTitle(""); setNfBody(""); setShowNoticeForm(false);
+    showToast(lang==="ko"?"공지가 등록되었습니다 ✅":"Notice posted ✅");
+  };
+
+  const deleteNotice = (id) => setNotices(prev=>prev.filter(n=>n.id!==id));
+
+  const shareKakao = () => {
+    const txt = lang==="ko"
+      ? "아가페 패밀리 크리스챤 교회 | 야긴보아즈 교육선교센터\n선교 후원에 함께해 주세요! 🙏\nagape-church.vercel.app"
+      : "Agape Family Christian Church | Jakin & Boaz Education Mission Center\nJoin us in supporting world missions! 🙏\nagape-church.vercel.app";
+    if (navigator.share) navigator.share({title:"AFCC Mission",text:txt}).catch(()=>{});
+    else navigator.clipboard?.writeText(txt);
+    showToast(lang==="ko"?"카카오톡으로 공유합니다 💛":"Sharing via KakaoTalk 💛");
+  };
+
+  const ko = lang==="ko";
+  const AMTS = [5000,10000,30000,50000,100000,200000];
+  const TABS = ko
+    ? [{id:"home",ic:"🏠",l:"홈"},{id:"mission",ic:"🌍",l:"선교"},{id:"gallery",ic:"📷",l:"갤러리"},{id:"notice",ic:"📢",l:"공지"},{id:"donate",ic:"🙏",l:"후원"},{id:"about",ic:"✝️",l:"소개"}]
+    : [{id:"home",ic:"🏠",l:"Home"},{id:"mission",ic:"🌍",l:"Mission"},{id:"gallery",ic:"📷",l:"Gallery"},{id:"notice",ic:"📢",l:"Notice"},{id:"donate",ic:"🙏",l:"Support"},{id:"about",ic:"✝️",l:"About"}];
+
+  const MCard = ({m}) => {
+    const pct = Math.round((m.raised/m.goal)*100);
+    return (
+      <div className="mcard">
+        <div style={{display:"flex",gap:10,marginBottom:8}}>
+          <span style={{fontSize:24}}>{m.flag}</span>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+              <div className="mloc">{m.country} · {m.area}</div>
+              <span style={{fontSize:9,background:"rgba(201,168,76,.18)",color:C.gold,border:"1px solid rgba(201,168,76,.35)",borderRadius:10,padding:"1px 7px",fontWeight:700}}>
+                {ko?m.tagKo:m.tag}
+              </span>
+            </div>
+            <div className="mname">{ko?m.nameKo:m.name}</div>
+          </div>
+        </div>
+        <div className="mdesc">{ko?m.descKo:m.desc}</div>
+        <div className="pbar-lbl">
+          <span>{ko?"목표":"Goal"} ₱{(m.goal/1000).toFixed(0)}K</span>
+          <span className="pbar-amt">₱{m.raised.toLocaleString()}</span>
+        </div>
+        <div className="pbar"><div className="pbar-fill" style={{width:pct+"%"}}/></div>
+        <div className="mcard-foot">
+          <span className="mdonors">👥 {m.donors} {ko?"명 후원":"supporters"}</span>
+          <button className="btn-sm" onClick={()=>openDonate(m)}>{ko?"후원하기":"Support"}</button>
+        </div>
+      </div>
+    );
+  };
+
+  const Home = () => (
+    <>
+      <div className="hero">
+        <div className="hero-eye">✝ Agape Family Christian Church</div>
+        <div className="hero-ttl">{ko?"열방을 향해\n나아가는 교회":"Going to\nAll Nations"}</div>
+        <div className="hero-verse">{ko?"오직 우리 주 곧 구주 예수 그리스도의 은혜와 그를 아는 지식에서 자라 가라 — 베드로후서 3:18":"But grow in the grace and knowledge of our Lord and Savior Jesus Christ. — 2 Peter 3:18"}</div>
+        <div className="hero-btns">
+          <button className="btn-g" onClick={()=>setTab("donate")}>{ko?"후원하기":"Support Now"}</button>
+          <button className="btn-o" onClick={()=>setTab("about")}>{ko?"교회소개":"About Us"}</button>
+        </div>
+      </div>
+      <div className="stats">
+        {[["12",ko?"선교 국가":"Mission Countries"],["38",ko?"파송 선교사":"Missionaries"],["2,400",ko?"월 후원자":"Monthly Donors"]].map(([n,l],i)=>(
+          <div className="stat" key={i}><div className="stat-n">{n}</div><div className="stat-l">{l}</div></div>
+        ))}
+      </div>
+      <div className="sec" style={{marginTop:18}}>
+        <div className="sec-hdr">
+          <div className="sec-ttl">{ko?"다가오는 일정":"Upcoming Events"}</div>
+          <div className="see-all" onClick={()=>setTab("events")}>{ko?"전체보기":"See all"}</div>
+        </div>
+        {EVENTS.slice(0,2).map((e,i)=>(
+          <div className="ecard" key={i}>
+            <div className="ebox"><div className="emon">{e.month}</div><div className="eday">{e.day}</div></div>
+            <div><div className="etag">{ko?e.tagKo:e.tag}</div><div className="ettl">{ko?e.titleKo:e.title}</div>
+            <div className="emeta">🕐 {e.time} · 📍 {e.loc}</div></div>
+          </div>
+        ))}
+      </div>
+      <div className="sec" style={{marginTop:16,paddingBottom:20}}>
+        <div className="sec-hdr">
+          <div className="sec-ttl">{ko?"긴급 선교 후원":"Featured Mission"}</div>
+          <div className="see-all" onClick={()=>setTab("mission")}>{ko?"전체보기":"See all"}</div>
+        </div>
+        <MCard m={MISSIONS[0]}/>
+      </div>
+    </>
+  );
+
+  const Mission = () => (
+    <div className="sec" style={{paddingTop:18,paddingBottom:18}}>
+      <div className="sec-ttl" style={{marginBottom:14}}>{ko?"진행 중인 선교":"Active Missions"}</div>
+      {MISSIONS.map(m=><MCard key={m.id} m={m}/>)}
+    </div>
+  );
+
+  const Gallery = () => (
+    <>
+      <div className="sec" style={{paddingTop:18,paddingBottom:12}}>
+        <div className="sec-hdr"><div className="sec-ttl">{ko?"사진 갤러리":"Photo Gallery"}</div></div>
+        <div style={{fontSize:11,color:C.muted,marginBottom:14}}>{ko?"앨범을 탭하면 사진을 볼 수 있습니다":"Tap an album to view photos"}</div>
+        <div className="upload-area" onClick={()=>fileRef.current.click()}>
+          <div className="upload-lbl">{ko?"📷 사진 업로드":"📷 Upload Photos"}</div>
+          <div className="upload-hint">{ko?"기기에서 사진을 선택하세요":"Tap to select photos from your device"}</div>
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" multiple style={{display:"none"}} onChange={handleUpload}/>
+      </div>
+      <div className="gal-grid">
+        {albums.map(a=>(
+          <div className="alb" key={a.id} onClick={()=>setSelAlbum(a)}>
+            <img className="alb-img" src={a.cover} alt={a.title}/>
+            <div className="alb-info">
+              <div className="alb-ttl">{ko?(a.titleKo||a.title):a.title}</div>
+              <div className="alb-meta">{a.date} · {a.photos.length} photos</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
+  const Notice = () => (
+    <>
+      <div className="sec" style={{paddingTop:18,paddingBottom:12}}>
+        <div className="sec-hdr">
+          <div className="sec-ttl">{ko?"공지사항":"Announcements"}</div>
+          <div style={{fontSize:10,color:C.green,background:"rgba(42,110,73,.15)",border:"1px solid rgba(42,110,73,.3)",borderRadius:10,padding:"3px 9px"}}>💾 {ko?"자동저장":"Auto-saved"}</div>
+        </div>
+      </div>
+      <button className="notice-add-btn" onClick={()=>setShowNoticeForm(v=>!v)}>
+        {showNoticeForm?(ko?"✕ 닫기":"✕ Close"):(ko?"+ 공지 등록":"+ Add Notice")}
+      </button>
+      {showNoticeForm && (
+        <div className="notice-form">
+          <input className="nf-input" placeholder={ko?"제목":"Title"} value={nfTitle} onChange={e=>setNfTitle(e.target.value)}/>
+          <textarea className="nf-textarea" placeholder={ko?"내용":"Content"} value={nfBody} onChange={e=>setNfBody(e.target.value)}/>
+          <div className="nf-btns">
+            <button className="nf-cancel" onClick={()=>{setShowNoticeForm(false);setNfTitle("");setNfBody("");}}>{ko?"취소":"Cancel"}</button>
+            <button className="nf-submit" onClick={submitNotice}>{ko?"등록":"Post"}</button>
+          </div>
+        </div>
+      )}
+      <div className="notice-list">
+        {notices.length===0 && <div style={{textAlign:"center",color:C.muted,fontSize:13,padding:"20px 0"}}>{ko?"등록된 공지사항이 없습니다.":"No announcements yet."}</div>}
+        {notices.map(n=>(
+          <div className="notice-card" key={n.id}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+              <div className="notice-date">{n.date}</div>
+              <button onClick={()=>deleteNotice(n.id)} style={{background:"rgba(192,57,43,.15)",border:"1px solid rgba(192,57,43,.3)",color:"#e07060",borderRadius:8,padding:"2px 9px",fontSize:10,cursor:"pointer",fontFamily:"inherit"}}>{ko?"삭제":"Delete"}</button>
+            </div>
+            <div className="notice-ttl">{ko?n.titleKo:n.titleEn}</div>
+            <div className="notice-body">{ko?n.bodyKo:n.bodyEn}</div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
+  const Donate = () => (
+    <div style={{padding:16}}>
+      <div style={{marginBottom:16}}>
+        <div className="sec-ttl">{ko?"선교 후원":"Mission Support"}</div>
+        <div style={{fontSize:12,color:C.muted,marginTop:4}}>{ko?"여러분의 후원이 열방을 변화시킵니다":"Your support transforms the nations"}</div>
+      </div>
+      <button className="kakao-btn" onClick={shareKakao}>
+        💛 {ko?"카카오톡으로 공유":"Share on KakaoTalk"}
+      </button>
+      {MISSIONS.map(m=>(
+        <div key={m.id} className="mcard" style={{marginBottom:14}}>
+          <div style={{display:"flex",gap:10,marginBottom:8}}>
+            <span style={{fontSize:24}}>{m.flag}</span>
+            <div><div className="mloc">{m.country}</div><div className="mname">{ko?m.nameKo:m.name}</div></div>
+          </div>
+          <div className="pbar-lbl">
+            <span>{Math.round((m.raised/m.goal)*100)}% funded</span>
+            <span className="pbar-amt">₱{m.raised.toLocaleString()}</span>
+          </div>
+          <div className="pbar"><div className="pbar-fill" style={{width:Math.round((m.raised/m.goal)*100)+"%"}}/></div>
+          <button className="btn-g" style={{width:"100%",marginTop:12}} onClick={()=>openDonate(m)}>
+            {ko?"이 선교 후원하기":"Support this Mission"}
+          </button>
+        </div>
+      ))}
+      <div className="acard">
+        <div className="acard-ttl">🏦 {ko?"하나은행 계좌이체":"Hana Bank Transfer"}</div>
+        <div className="bank-box">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span style={{fontSize:10,color:C.muted}}>{ko?"은행":"BANK"}</span>
+            <span style={{fontSize:14,fontWeight:700,color:C.cream}}>{ko?"하나은행":"Hana Bank"}</span>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <span style={{fontSize:10,color:C.muted}}>{ko?"예금주":"ACCOUNT HOLDER"}</span>
+            <span style={{fontSize:14,fontWeight:700,color:C.cream}}>김성년 (Kim Sung Nyun)</span>
+          </div>
+          <div style={{borderTop:"1px solid rgba(201,168,76,.2)",paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontSize:10,color:C.muted,marginBottom:3}}>{ko?"계좌번호":"ACCOUNT NO."}</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:C.gold,letterSpacing:1}}>132-891505-76807</div>
+            </div>
+            <button onClick={()=>{navigator.clipboard?.writeText("13289150576807");showToast(ko?"계좌번호가 복사되었습니다 ✅":"Account number copied ✅");}}
+              style={{background:"rgba(201,168,76,.2)",border:"1px solid rgba(201,168,76,.5)",color:C.gold,borderRadius:10,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+              {ko?"복사":"Copy"}
+            </button>
+          </div>
+        </div>
+        <div style={{fontSize:11,color:"rgba(250,246,238,.65)",lineHeight:1.7}}>{ko?"* 입금 후 카카오톡으로 성함과 후원 목적을 알려주시면 감사합니다":"* After transfer, please send your name & purpose via KakaoTalk"}</div>
+      </div>
+    </div>
+  );
+
+  const About = () => (
+    <div style={{padding:16}}>
+      <div className="acard">
+        <div className="acard-ttl">✝ {ko?"교회 소개":"About the Church"}</div>
+        <div style={{fontSize:12,color:"rgba(250,246,238,.75)",lineHeight:1.75}}>
+          <strong style={{color:C.goldLt}}>Agape Family Christian Church</strong><br/>
+          아가페 패밀리 크리스챤 교회<br/><br/>
+          <em style={{color:C.gold}}>Jakin and Boaz Education Mission Center<br/>야긴보아즈 교육선교센터</em><br/><br/>
+          Founded 2010 · San Mateo, Rizal, Philippines<br/><br/>
+          <em style={{color:C.muted}}>"Mature Faith, Better Life" — 2 Peter 3:18</em>
+        </div>
+      </div>
+      <div className="acard">
+        <div className="acard-ttl">🕊 {ko?"예배 시간":"Worship Schedule"}</div>
+        {(ko?[
+          {label:"주일 예배",time:"일요일 오전 9:30"},
+          {label:"금요 기도회",time:"금요일 오후 7:00–8:00"},
+          {label:"청년 모임",time:"매 2·4주 토요일 오후 7:00–8:00"},
+          {label:"티모시 아카데미",time:"화 오전 8–10시 · 목/토 오후 1:30–4:00"},
+        ]:[
+          {label:"General Worship Service",time:"Sunday, 9:30 am"},
+          {label:"Prayer Meeting",time:"Friday, 7:00–8:00 pm"},
+          {label:"Youth Fellowship",time:"Every 2nd & 4th Saturday 7:00–8:00 pm"},
+          {label:"Timothy Academy",time:"Tue 8–10 am · Thu/Sat 1:30–4:00 pm"},
+        ]).map((s,i)=>(
+          <div key={i} style={{padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
+            <div style={{fontSize:11,color:C.gold,marginBottom:2}}>✝ {s.label}</div>
+            <div style={{fontSize:12,color:C.cream}}>{s.time}</div>
+          </div>
+        ))}
+      </div>
+      <div className="acard">
+        <div className="acard-ttl">👥 {ko?"교역자 소개":"Church Leadership"}</div>
+        {STAFF.map((s,i)=>(
+          <div className="staff-row" key={i}>
+            <span style={{fontSize:11,color:C.muted}}>{ko?s.roleKo:s.role}</span>
+            <span style={{fontSize:12,color:C.cream,fontWeight:500}}>{s.name}</span>
+          </div>
+        ))}
+      </div>
+      <div className="acard">
+        <div className="acard-ttl">📞 {ko?"연락처":"Contact"}</div>
+        {[
+          {ic:"📍",label:ko?"주소":"Address",val:"No. 4, Dama De Noche St., Doña Pepeng, Banaba, San Mateo, Rizal"},
+          {ic:"📞",label:ko?"전화":"Phone",val:"028-733-7427"},
+          {ic:"🏫",label:ko?"티모시 아카데미":"Timothy Academy",val:"Tue 8–10am · Thu/Sat 1:30–4pm"},
+        ].map((c,i)=>(
+          <div className="contact-row" key={i}>
+            <div className="cicon">{c.ic}</div>
+            <div><div style={{fontSize:10,color:C.muted}}>{c.label}</div><div style={{fontSize:12,color:C.cream,fontWeight:500}}>{c.val}</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <style>{CSS}</style>
+      <div className="shell">
+        <div className="hdr">
+          <div className="hdr-top">
+            <div>
+              <div className="brand-en">AGAPE FAMILY CHRISTIAN CHURCH</div>
+              <div className="brand-sub">Jakin & Boaz Education Mission Center</div>
+            </div>
+            <div className="lang-toggle">
+              <button className={"lang-btn"+(lang==="ko"?" on":"")} onClick={()=>setLang("ko")}>한국어</button>
+              <button className={"lang-btn"+(lang==="en"?" on":"")} onClick={()=>setLang("en")}>ENG</button>
+            </div>
+          </div>
+          <div className="tabs">
+            {TABS.map(t=>(
+              <button key={t.id} className={"tab"+(tab===t.id?" on":"")} onClick={()=>setTab(t.id)}>
+                <span className="tab-ic">{t.ic}</span>{t.l}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="body">
+          {tab==="home" && <Home/>}
+          {tab==="mission" && <Mission/>}
+          {tab==="gallery" && <Gallery/>}
+          {tab==="notice" && <Notice/>}
+          {tab==="donate" && <Donate/>}
+          {tab==="about" && <About/>}
+        </div>
+        {selAlbum && <AlbumViewer album={selAlbum} lang={lang} onClose={()=>setSelAlbum(null)}/>}
+        {showDonate && (
+          <div className="modal-ov" onClick={()=>setShowDonate(false)}>
+            <div className="modal" onClick={e=>e.stopPropagation()}>
+              <div className="modal-handle"/>
+              <div className="modal-ttl">{selMission?.flag} {ko?"선교 후원":"Mission Support"}</div>
+              <div className="modal-sub">{ko?selMission?.nameKo:selMission?.name}</div>
+              <div className="amt-grid">
+                {AMTS.map(a=>(
+                  <button key={a} className={"amt-btn"+(selAmt===a?" on":"")} onClick={()=>{setSelAmt(a);setCustAmt("");}}>
+                    ₩{a.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+              <input className="cinput" placeholder={ko?"직접 입력 (₩)":"Custom amount (₩)"} value={custAmt}
+                onChange={e=>{setCustAmt(e.target.value);setSelAmt(null);}}/>
+              <div className="bank-box" style={{marginBottom:14}}>
+                <div style={{fontSize:10,color:C.muted,marginBottom:6}}>{ko?"입금 계좌":"Transfer Account"}</div>
+                <div style={{fontSize:13,fontWeight:700,color:C.cream,marginBottom:3}}>{ko?"하나은행 · 김성년":"Hana Bank · Kim Sung Nyun"}</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.gold,fontWeight:700}}>132-891505-76807</div>
+                  <button onClick={()=>{navigator.clipboard?.writeText("13289150576807");showToast(ko?"복사됨 ✅":"Copied ✅");}}
+                    style={{background:"rgba(201,168,76,.2)",border:"1px solid rgba(201,168,76,.4)",color:C.gold,borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                    {ko?"복사":"Copy"}
+                  </button>
+                </div>
+              </div>
+              <button className="btn-donate" onClick={submitDonate}>
+                {ko?"후원 확인":"Confirm Donation"} ₩{custAmt?parseInt(custAmt||0).toLocaleString():(selAmt?.toLocaleString()||"0")}
+              </button>
+            </div>
+          </div>
+        )}
+        {toast && <div className="toast">{toast}</div>}
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
